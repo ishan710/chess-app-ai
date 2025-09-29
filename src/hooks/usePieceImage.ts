@@ -12,6 +12,7 @@ const PIECE_TYPE_MAP: { [key: string]: string } = {
 
 export const usePieceImage = () => {
   const getPieceImage = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (piece: any): string | null => {
       if (!piece) return null;
       

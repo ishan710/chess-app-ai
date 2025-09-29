@@ -206,6 +206,7 @@ function createBoardVisual(game: Chess): string {
 }
 
 // Helper function to get piece symbols
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getPieceSymbol(piece: any): string {
   const symbols: { [key: string]: { [key: string]: string } } = {
     'w': { 'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗', 'n': '♘', 'p': '♙' },

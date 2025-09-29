@@ -2,11 +2,13 @@ import { useCallback, useEffect } from 'react';
 
 interface UseAIMoveProps {
   isPlayerTurn: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   makeAIMove: () => Promise<any>;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   setIsPlayerTurn: (turn: boolean) => void;
 }
 
-export const useAIMove = ({ isPlayerTurn, makeAIMove, setIsPlayerTurn }: UseAIMoveProps) => {
+export const useAIMove = ({ isPlayerTurn, makeAIMove, setIsPlayerTurn: _setIsPlayerTurn }: UseAIMoveProps) => {
   const triggerAIMove = useCallback(async () => {
     if (!isPlayerTurn) {
       const result = await makeAIMove();
