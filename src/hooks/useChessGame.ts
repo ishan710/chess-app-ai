@@ -130,10 +130,15 @@ export const useChessGame = () => {
   // Make AI move
   const makeAIMove = useCallback(async () => {
     try {
-      const response = await fetch('/api/ai-move-v2', {
+      const currentFen = game.fen();
+      console.log('🎮 Frontend - Current FEN being sent:', currentFen);
+      console.log('🎮 Frontend - Game history:', game.history());
+      console.log('🎮 Frontend - Current turn:', game.turn());
+      
+      const response = await fetch('/api/ai-move', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fen: game.fen() }),
+        body: JSON.stringify({ fen: currentFen }),
       });
 
       if (!response.ok) throw new Error('Failed to get AI move');

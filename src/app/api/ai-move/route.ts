@@ -7,6 +7,8 @@ import { join } from 'path';
 export async function POST(request: NextRequest) {
   try {
     const { fen } = await request.json();
+    console.log('📥 Received FEN:', fen);
+    console.log('📥 FEN length:', fen?.length);
     
     if (!fen) {
       return NextResponse.json({ error: 'FEN string is required' }, { status: 400 });
@@ -21,6 +23,11 @@ export async function POST(request: NextRequest) {
 
     // Check if black has opened yet (determine if we're in opening phase)
     const hasBlackOpened = hasBlackMadeOpeningMove(game);
+    console.log('🎯 Opening phase check - Black has opened:', hasBlackOpened);
+    console.log('📊 Game history length:', game.history().length);
+    console.log('📋 Black moves count:', game.history({ verbose: true }).filter((_, index) => index % 2 === 1).length);
+    console.log('🎮 Current turn:', game.turn());
+    console.log('📜 Full history:', game.history());
 
     // Get all possible moves
     const moves = game.moves({ verbose: true });
@@ -53,9 +60,12 @@ export async function POST(request: NextRequest) {
       try {
         const openingsPath = join(process.cwd(), 'src', 'prompts', 'openings.prompt');
         openingsContent = readFileSync(openingsPath, 'utf-8');
+        console.log('📚 Loaded openings prompt, length:', openingsContent.length);
       } catch (error) {
         console.warn('Could not load openings prompt:', error);
       }
+    } else {
+      console.log('🚫 Skipping openings prompt - Black has opened');
     }
 
     // Create the prompt for the LLM
@@ -217,12 +227,15 @@ function getPieceSymbol(piece: any): string {
 
 // Helper function to determine if black has made an opening move
 function hasBlackMadeOpeningMove(game: Chess): boolean {
-  const history = game.history({ verbose: true });
+  // Get the fullmove number from FEN - this tells us how many complete moves have been made
+  const fen = game.fen();
+  const fullmoveNumber = parseInt(fen.split(' ')[5]);
+  console.log('📊 Fullmove number from FEN:', fullmoveNumber);
   
-  // Count black moves (every second move starting from index 1)
-  const blackMoves = history.filter((_, index) => index % 2 === 1);
+  // Black moves are: 1st move (fullmove 1), 3rd move (fullmove 2), 5th move (fullmove 3), etc.
+  // So Black has made a move if fullmoveNumber >= 1
+  const blackHasMoved = fullmoveNumber >= 2;
+  console.log('📋 Black has moved:', blackHasMoved);
   
-  // Consider it "opened" if black has made 3 or more moves
-  // This is a heuristic - typically opening phase lasts about 10-15 moves total
-  return blackMoves.length >= 3;
+  return blackHasMoved;
 }

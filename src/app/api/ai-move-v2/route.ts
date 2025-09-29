@@ -407,7 +407,7 @@ Evaluate this move on a scale of 1-10 considering:
 - Positional value (does it improve the position?)
 {evaluationCriteria}
 
-A move scoring 7+ should be approved, 4-6 needs improvement, 1-3 should be rejected.
+A move scoring 4+ should be approved, 1-3 should be rejected.
 
 Respond in this exact format:
 SCORE: [number 1-10]

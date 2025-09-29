@@ -204,11 +204,7 @@ const ChessBoard: React.FC<ChessBoardProps> = () => {
           Undo Move {moveHistory.length > 0 && `(${moveHistory.length})`}
         </button>
       </div>
-      
-      <div className={styles.gameInfo}>
-        <p>FEN: {gameState.fen}</p>
-        <p>Moves: {gameState.history.length}</p>
-      </div>
+
       
       {lastAIMove && (
         <div className={styles.aiReasoning}>
