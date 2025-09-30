@@ -88,7 +88,7 @@ export const useChessGame = () => {
   }, [moveHistory]);
 
   const handleSquareClick = useCallback((square: string) => {
-    if (!isPlayerTurn) return;
+    if (!isPlayerTurn || gameWithHistory.isGameOver()) return;
 
     const piece = game.get(square as any);
     
@@ -125,10 +125,16 @@ export const useChessGame = () => {
 
   const makeAIMove = useCallback(async () => {
     try {
+      // Check if game is over before making AI move
+      if (gameWithHistory.isGameOver()) {
+        console.log('🎯 Game is over - not making AI move');
+        return null;
+      }
+
       const currentFen = gameWithHistory.fen();
       const currentHistory = gameWithHistory.history();
       
-      const response = await fetch('/api/ai-move', {
+      const response = await fetch('/api/ai-move-v3', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -137,7 +143,15 @@ export const useChessGame = () => {
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to get AI move');
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.gameOver) {
+          console.log('🎯 Game is over:', errorData.result);
+          setIsPlayerTurn(false); // Prevent further moves
+          return null;
+        }
+        throw new Error('Failed to get AI move');
+      }
 
       const data = await response.json();
       

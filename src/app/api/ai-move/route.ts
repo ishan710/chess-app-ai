@@ -17,6 +17,15 @@ export async function POST(request: NextRequest) {
 
     const game = new Chess(fen);
     
+    // Check if game is over
+    if (game.isGameOver()) {
+      return NextResponse.json({ 
+        error: 'Game is already over',
+        gameOver: true,
+        result: game.isCheckmate() ? 'checkmate' : game.isStalemate() ? 'stalemate' : 'draw'
+      }, { status: 400 });
+    }
+    
     // Check if it's black's turn
     if (game.turn() !== 'b') {
       return NextResponse.json({ error: 'Not black\'s turn' }, { status: 400 });
@@ -239,8 +248,6 @@ function hasBlackMadeOpeningMove(game: Chess): boolean {
   const fullmoveNumber = parseInt(fen.split(' ')[5]);
   console.log('📊 Fullmove number from FEN:', fullmoveNumber);
   
-  // Black moves are: 1st move (fullmove 1), 3rd move (fullmove 2), 5th move (fullmove 3), etc.
-  // So Black has made a move if fullmoveNumber >= 1
   const blackHasMoved = fullmoveNumber >= 2;
   console.log('📋 Black has moved:', blackHasMoved);
   
