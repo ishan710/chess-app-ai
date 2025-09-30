@@ -74,6 +74,7 @@ const ChessBoard: React.FC<ChessBoardProps> = () => {
   }, [gameState.board, selectedSquare, validMoves, getPieceImage, handleSquareClick]);
 
   // Memoized game status
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const gameStatus = useMemo(() => {
     if (gameState.isGameOver) {
       return (

@@ -185,6 +185,7 @@ function determineGamePhase(game: Chess, recentMoves: string[]): string {
 
 // Count material on the board
 function countMaterial(game: Chess): number {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const board = game.board();
   let count = 0;
   
@@ -274,8 +275,10 @@ function createDynamicPrompt({
 }: {
   boardVisual: string;
   fen: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   formattedMoves: any[];
   gamePhase: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   positionAnalysis: any;
   historicalAnalysis: string;
   recentMoves: string[];

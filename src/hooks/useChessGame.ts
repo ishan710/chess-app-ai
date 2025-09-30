@@ -21,11 +21,13 @@ export const useChessGame = () => {
 
   const { evaluation, isLoading: isEvaluating, error: evaluationError, evaluatePosition } = useChessAPI({ fen: game.fen() });
   
+  const fen = game.fen();
   useEffect(() => {
     if (!game.isGameOver()) {
       evaluatePosition();
     }
-  }, [game.fen(), evaluatePosition]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fen, evaluatePosition]);
 
   const reconstructGameFromHistory = useCallback((moves: string[]) => {
     const newGame = new Chess();
@@ -121,7 +123,7 @@ export const useChessGame = () => {
     }
     
     return false;
-  }, [game, isPlayerTurn, selectedSquare, validMoves]);
+  }, [game, isPlayerTurn, selectedSquare, validMoves, gameWithHistory]);
 
   const makeAIMove = useCallback(async () => {
     try {
@@ -184,7 +186,7 @@ export const useChessGame = () => {
         setIsPlayerTurn(true);
       }
     }
-  }, [gameWithHistory]);
+  }, [gameWithHistory, game]);
 
   return {
     game,
