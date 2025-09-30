@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { useChessAPI } from './useChessAPI';
@@ -9,7 +10,8 @@ export const useChessGame = () => {
   const [lastAIMove, setLastAIMove] = useState<{
     move: string;
     reasoning: string;
-    timestamp: number;} | null>(null);
+    timestamp: number;
+  } | null>(null);
   const [moveHistory, setMoveHistory] = useState<Array<{
     fen: string;
     move: string;
@@ -17,42 +19,51 @@ export const useChessGame = () => {
     isPlayerMove: boolean;
   }>>([]);
 
-  // Chess API evaluation
   const { evaluation, isLoading: isEvaluating, error: evaluationError, evaluatePosition } = useChessAPI({ fen: game.fen() });
-
-  // Auto-evaluate position when it changes
-  const fen = game.fen();
+  
   useEffect(() => {
     if (!game.isGameOver()) {
       evaluatePosition();
     }
-  }, [fen, evaluatePosition]);
+  }, [game.fen(), evaluatePosition]);
 
-  // Memoized game state
+  const reconstructGameFromHistory = useCallback((moves: string[]) => {
+    const newGame = new Chess();
+    moves.forEach(move => {
+      try {
+        newGame.move(move);
+      } catch (error) {
+        console.error('Error replaying move:', move, error);
+      }
+    });
+    return newGame;
+  }, []);
+
+  const gameWithHistory = useMemo(() => {
+    const moves = moveHistory.map(move => move.move);
+    return reconstructGameFromHistory(moves);
+  }, [moveHistory, reconstructGameFromHistory]);
+
   const gameState = useMemo(() => ({
-    isGameOver: game.isGameOver(),
-    isCheckmate: game.isCheckmate(),
-    isStalemate: game.isStalemate(),
-    isCheck: game.isCheck(),
-    turn: game.turn(),
-    fen: game.fen(),
-    history: game.history(),
-    board: game.board(),
-    evaluation: evaluation,
-    isEvaluating: isEvaluating,
-    evaluationError: evaluationError
-  }), [game, evaluation, isEvaluating, evaluationError]);
+    isGameOver: gameWithHistory.isGameOver(),
+    isCheckmate: gameWithHistory.isCheckmate(),
+    isStalemate: gameWithHistory.isStalemate(),
+    isCheck: gameWithHistory.isCheck(),
+    turn: gameWithHistory.turn(),
+    fen: gameWithHistory.fen(),
+    history: gameWithHistory.history(),
+    board: gameWithHistory.board(),
+    evaluation,
+    isEvaluating,
+    evaluationError
+  }), [gameWithHistory, evaluation, isEvaluating, evaluationError]);
 
-  // Memoized valid moves for selected square
   const validMoves = useMemo(() => {
     if (!selectedSquare) return [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return game.moves({ square: selectedSquare as any, verbose: true })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((move: any) => move.to);
   }, [game, selectedSquare]);
 
-  // Reset game
   const resetGame = useCallback(() => {
     setGame(new Chess());
     setSelectedSquare(null);
@@ -61,49 +72,36 @@ export const useChessGame = () => {
     setMoveHistory([]);
   }, []);
 
-  // Undo last move
   const undoMove = useCallback(() => {
     if (moveHistory.length > 0) {
       const lastMove = moveHistory[moveHistory.length - 1];
       setMoveHistory(prev => prev.slice(0, -1));
       
-      // If undoing AI move, also clear AI reasoning
       if (!lastMove.isPlayerMove) {
         setLastAIMove(null);
       }
       
-      // Restore game state
       setGame(new Chess(lastMove.fen));
       setSelectedSquare(null);
-      setIsPlayerTurn(!lastMove.isPlayerMove); // Set turn to the player who made the move we're undoing
+      setIsPlayerTurn(!lastMove.isPlayerMove);
     }
   }, [moveHistory]);
 
-  // Handle square click
   const handleSquareClick = useCallback((square: string) => {
     if (!isPlayerTurn) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const piece = game.get(square as any);
     
-    // If clicking on a piece of the current player
     if (piece && piece.color === game.turn()) {
       setSelectedSquare(square);
-    }
-    // If clicking on a valid move square
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    else if (selectedSquare && validMoves.includes(square as any)) {
+    } else if (selectedSquare && validMoves.includes(square as any)) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const move = game.move({
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           from: selectedSquare as any,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           to: square as any,
         });
         
         if (move) {
-          // Add move to history
           setMoveHistory(prev => [...prev, {
             fen: game.fen(),
             move: move.san,
@@ -113,41 +111,46 @@ export const useChessGame = () => {
           
           setSelectedSquare(null);
           setIsPlayerTurn(false);
-          return true; // Indicates move was made
+          return true;
         }
       } catch (error) {
         console.error('Invalid move:', error);
       }
-    }
-    // Clear selection if clicking elsewhere
-    else {
+    } else {
       setSelectedSquare(null);
     }
     
-    return false; // No move was made
+    return false;
   }, [game, isPlayerTurn, selectedSquare, validMoves]);
 
-  // Make AI move
   const makeAIMove = useCallback(async () => {
     try {
-      const currentFen = game.fen();
-      console.log('🎮 Frontend - Current FEN being sent:', currentFen);
-      console.log('🎮 Frontend - Game history:', game.history());
-      console.log('🎮 Frontend - Current turn:', game.turn());
+      const currentFen = gameWithHistory.fen();
+      const currentHistory = gameWithHistory.history();
       
       const response = await fetch('/api/ai-move', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fen: currentFen }),
+        body: JSON.stringify({ 
+          fen: currentFen,
+          gameHistory: currentHistory
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to get AI move');
 
       const data = await response.json();
+      
+      setMoveHistory(prev => [...prev, {
+        fen: data.fen,
+        move: data.move,
+        timestamp: Date.now(),
+        isPlayerMove: false
+      }]);
+      
       setGame(new Chess(data.fen));
       setIsPlayerTurn(true);
       
-      // Store AI move reasoning if available
       if (data.reasoning) {
         setLastAIMove({
           move: data.move,
@@ -156,18 +159,9 @@ export const useChessGame = () => {
         });
       }
       
-      // Add AI move to history
-      setMoveHistory(prev => [...prev, {
-        fen: data.fen,
-        move: data.move,
-        timestamp: Date.now(),
-        isPlayerMove: false
-      }]);
-      
       return data;
     } catch (error) {
       console.error('Error getting AI move:', error);
-      // Fallback to random move
       const moves = game.moves();
       if (moves.length > 0) {
         const randomMove = moves[Math.floor(Math.random() * moves.length)];
@@ -176,7 +170,7 @@ export const useChessGame = () => {
         setIsPlayerTurn(true);
       }
     }
-  }, [game]);
+  }, [gameWithHistory]);
 
   return {
     game,

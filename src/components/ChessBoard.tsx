@@ -134,85 +134,64 @@ const ChessBoard: React.FC<ChessBoardProps> = () => {
   }, [gameState.evaluation]);
 
   return (
-    <div className={styles.chessContainer}>
-      <div className={styles.gameStatus}>
-        {gameStatus}
-      </div>
-      
-      {/* Professional Position Evaluation */}
-      <div className={styles.positionEvaluation}>
-        <div className={styles.evaluationLabels}>
-          <span className={styles.whiteLabel}>White</span>
-          <span className={styles.evaluationValue}>
-            {positionEvaluation.mate ? 
-              `M${positionEvaluation.mate}` : 
-              `${(positionEvaluation.evaluation || 0) > 0 ? '+' : ''}${positionEvaluation.evaluation || 0}`
-            }
-          </span>
-          <span className={styles.blackLabel}>Black</span>
-        </div>
-        <div className={styles.progressBar}>
+    <div className={styles.chessGame}>
+      <div className={styles.performanceBar}>
+        <div className={styles.barContainer}>
           <div 
-            className={styles.progressFill}
-            style={{ width: `${positionEvaluation.percentage}%` }}
+            className={styles.barFill}
+            style={{ 
+              height: `${positionEvaluation.percentage}%`,
+              backgroundColor: positionEvaluation.advantage === 'White' ? '#22c55e' : 
+                               positionEvaluation.advantage === 'Black' ? '#ef4444' : '#f59e0b'
+            }}
           />
         </div>
-        <div className={styles.evaluationDetails}>
-          <div className={styles.advantageText}>
-            {positionEvaluation.mate ? 
-              `${positionEvaluation.advantage} ${positionEvaluation.text}` :
-              positionEvaluation.advantage === 'Equal' ? 
-                'Equal Position' : 
-                `${positionEvaluation.advantage} Advantage (${positionEvaluation.winChance}%)`
-            }
+        <div className={styles.winPercentages}>
+          <div className={styles.blackWin}>
+            BLACK: {(100 - positionEvaluation.winChance).toFixed(1)}%
           </div>
-          {gameState.isEvaluating && (
-            <div className={styles.evaluatingText}>
-              🔍 Analyzing position... (Depth: {positionEvaluation.depth})
-            </div>
-          )}
-          {gameState.evaluationError && (
-            <div className={styles.errorText}>
-              ⚠️ Evaluation error: {gameState.evaluationError}
-            </div>
-          )}
-          {positionEvaluation.text && !positionEvaluation.mate && (
-            <div className={styles.analysisText}>
-              📊 {positionEvaluation.text}
-            </div>
-          )}
+          <div className={styles.whiteWin}>
+            WHITE: {positionEvaluation.winChance.toFixed(1)}%
+          </div>
         </div>
-      </div>
-      
-      <div className={styles.chessBoard}>
-        {boardSquares}
-      </div>
-      
-      <div className={styles.controlButtons}>
-        <button
-          onClick={resetGame}
-          className={`${styles.controlButton} ${styles.newGameButton}`}
-        >
-          New Game
-        </button>
-        
-        <button
-          onClick={undoMove}
-          disabled={moveHistory.length === 0}
-          className={`${styles.controlButton} ${styles.undoButton} ${moveHistory.length === 0 ? styles.disabledButton : ''}`}
-        >
-          Undo Move {moveHistory.length > 0 && `(${moveHistory.length})`}
-        </button>
+        <div className={styles.turnText}>
+          {isPlayerTurn ? 'Your Turn' : 'AI Thinking...'}
+        </div>
+        {gameState.isEvaluating && (
+          <div className={styles.evaluatingIndicator}>
+            🔍
+          </div>
+        )}
       </div>
 
-      
+      <div className={styles.gameArea}>
+        <div className={styles.chessBoard}>
+          {boardSquares}
+        </div>
+        
+        <div className={styles.gameControls}>
+          <button
+            onClick={resetGame}
+            className={styles.controlButton}
+          >
+            New Game
+          </button>
+          
+          <button
+            onClick={undoMove}
+            disabled={moveHistory.length === 0}
+            className={`${styles.controlButton} ${moveHistory.length === 0 ? styles.disabledButton : ''}`}
+          >
+            Undo
+          </button>
+        </div>
+      </div>
+
+      {/* AI Move Info */}
       {lastAIMove && (
-        <div className={styles.aiReasoning}>
-          {/* eslint-disable-next-line react/no-unescaped-entities */}
-          <h3>AI's Last Move: {lastAIMove.move}</h3>
-          <div className={styles.reasoningText}>
-            <strong>Reasoning:</strong> {lastAIMove.reasoning}
-          </div>
+        <div className={styles.aiMoveInfo}>
+          <div className={styles.moveNotation}>{lastAIMove.move}</div>
+          <div className={styles.moveReasoning}>{lastAIMove.reasoning}</div>
         </div>
       )}
     </div>

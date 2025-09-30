@@ -6,8 +6,9 @@ import { join } from 'path';
 
 export async function POST(request: NextRequest) {
   try {
-    const { fen } = await request.json();
+    const { fen, gameHistory } = await request.json();
     console.log('📥 Received FEN:', fen);
+    console.log('📥 Received game history:', gameHistory);
     console.log('📥 FEN length:', fen?.length);
     
     if (!fen) {
@@ -44,6 +45,10 @@ export async function POST(request: NextRequest) {
     // Create a visual representation of the board
     const boardVisual = createBoardVisual(game);
     
+    // Get last 6 moves from game history (passed from frontend)
+    const recentMoves = gameHistory ? gameHistory.slice(-6) : [];
+    console.log('📜 Recent moves (last 6):', recentMoves);
+    
     // Format moves for the LLM
     const formattedMoves = moves.map(move => ({
       notation: move.san,
@@ -75,6 +80,8 @@ ${boardVisual}
 
 Current FEN: ${fen}
 It's black's turn to move.
+
+Recent moves (last 6): ${recentMoves.length > 0 ? recentMoves.join(', ') : 'Game just started'}
 
 Available moves:
 ${formattedMoves.map((move, index) => `${index + 1}. ${move.notation} - ${move.description}`).join('\n')}
