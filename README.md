@@ -19,7 +19,7 @@ A sophisticated chess application featuring advanced AI-powered move generation 
 
 ## V3 API Endpoint: `/api/ai-move-v3`
 
-The most advanced AI chess endpoint with intelligent retry logic and tactical strategy integration.
+The AI chess endpoint with intelligent retry logic and tactical strategy integration.
 
 ### Key Features
 
