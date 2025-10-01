@@ -1,14 +1,13 @@
 # AI Chess Application - V3 API
 
-A sophisticated chess application featuring advanced AI-powered move generation with persistent tactical strategy and dynamic prompt engineering.
+A sophisticated chess application featuring advanced AI-powered move generation with dynamic tactical strategy and prompt engineering.
 
 ## Core Features
 
 - **V3 AI Move Generation**: Advanced chess AI with retry logic and move validation
-- **Tactical Strategy System**: Persistent AI strategy that evolves every 3 moves
+- **Tactical Strategy System**: Dynamic AI strategy that evolves every 3 moves
 - **Dynamic Prompt Engineering**: Phase-specific prompts for opening, middlegame, and endgame
 - **Interactive Chess Board**: Full-featured chess interface with real-time evaluation
-- **Local Storage Persistence**: Tactical strategies persist between sessions
 
 ## Tech Stack
 
@@ -25,7 +24,7 @@ The most advanced AI chess endpoint with intelligent retry logic and tactical st
 ### Key Features
 
 - **Retry Logic**: Up to 5 attempts with improved prompts for invalid moves
-- **Tactical Strategy Integration**: Uses persistent AI strategy for consistent play
+- **Tactical Strategy Integration**: Uses dynamic AI strategy for consistent play
 - **Dynamic Game Phase Detection**: Automatically adapts to opening/middlegame/endgame
 - **Position Analysis**: Real-time evaluation of king safety, center control, and piece activity
 - **LLM-Powered Historical Analysis**: AI analyzes recent moves for context
@@ -36,13 +35,12 @@ The most advanced AI chess endpoint with intelligent retry logic and tactical st
 
 ### `/api/tactical-analysis`
 
-Generates comprehensive tactical strategies that persist across multiple moves.
+Generates comprehensive tactical strategies that evolve throughout the game.
 
 #### Features
 
-- **Persistent Strategy**: AI maintains consistent strategic approach
+- **Dynamic Strategy**: AI maintains consistent strategic approach during the session
 - **Every 3 Moves Update**: Strategy refreshes automatically every 3 moves
-- **Local Storage**: Strategies persist between browser sessions
 - **Context Awareness**: Uses previous strategy as context for new strategies
 - **Non-blocking**: Runs in parallel with move generation
 
@@ -215,7 +213,6 @@ npm run dev
 - **View Strategy**: Click on the "AI Strategy" panel to expand/collapse
 - **Manual Refresh**: Use the "Refresh" button to force strategy update
 - **Clear Strategy**: Use the "Clear" button to reset strategy for new game
-- **Persistent Storage**: Strategies automatically save to localStorage
 
 ## Configuration
 
@@ -258,10 +255,9 @@ const maxAttempts = 5; // Change number of retry attempts
 ### Tactical Strategy Lifecycle
 
 1. **Initial Strategy**: Generated on first move
-2. **Strategy Persistence**: Saved to localStorage
-3. **Periodic Updates**: Refreshed every 3 moves
-4. **Context Integration**: Previous strategy used as context for new strategy
-5. **Game Reset**: Strategy cleared when starting new game
+2. **Strategy Evolution**: Refreshed every 3 moves
+3. **Context Integration**: Previous strategy used as context for new strategy
+4. **Game Reset**: Strategy cleared when starting new game
 
 ### Prompt Engineering Techniques
 
