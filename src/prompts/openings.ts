@@ -1,5 +1,5 @@
 // src/prompts/openings.ts
-const openingsPrompt = `
+export const openingsPrompt = `
 
 # Standard Chess Openings
 
@@ -118,5 +118,3 @@ CHOOSE A RANDOM OPENING
 ---
 
 `;
-
-export default openingsPrompt;

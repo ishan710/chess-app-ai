@@ -2,6 +2,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { useChessAPI } from './useChessAPI';
+import { useTacticalStrategy } from './useTacticalStrategy';
 
 export const useChessGame = () => {
   const [game, setGame] = useState(() => new Chess());
@@ -22,12 +23,7 @@ export const useChessGame = () => {
   const { evaluation, isLoading: isEvaluating, error: evaluationError, evaluatePosition } = useChessAPI({ fen: game.fen() });
   
   const fen = game.fen();
-  useEffect(() => {
-    if (!game.isGameOver()) {
-      evaluatePosition();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fen, evaluatePosition]);
+  const moveCount = moveHistory.length;
 
   const reconstructGameFromHistory = useCallback((moves: string[]) => {
     const newGame = new Chess();
@@ -45,6 +41,30 @@ export const useChessGame = () => {
     const moves = moveHistory.map(move => move.move);
     return reconstructGameFromHistory(moves);
   }, [moveHistory, reconstructGameFromHistory]);
+  
+  // Initialize tactical strategy
+  const {
+    currentStrategy,
+    strategyData,
+    isLoading: isStrategyLoading,
+    error: strategyError,
+    lastUpdateMove,
+    movesUntilNextUpdate,
+    getTacticalPatterns,
+    refreshStrategy,
+    clearStrategy
+  } = useTacticalStrategy({ 
+    fen, 
+    gameHistory: gameWithHistory.history(), 
+    moveCount 
+  });
+  
+  useEffect(() => {
+    if (!game.isGameOver()) {
+      evaluatePosition(fen);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fen]);
 
   const gameState = useMemo(() => ({
     isGameOver: gameWithHistory.isGameOver(),
@@ -57,8 +77,14 @@ export const useChessGame = () => {
     board: gameWithHistory.board(),
     evaluation,
     isEvaluating,
-    evaluationError
-  }), [gameWithHistory, evaluation, isEvaluating, evaluationError]);
+    evaluationError,
+    // Tactical strategy state
+    currentStrategy,
+    strategyData,
+    isStrategyLoading,
+    strategyError,
+    movesUntilNextUpdate
+  }), [gameWithHistory, evaluation, isEvaluating, evaluationError, currentStrategy, strategyData, isStrategyLoading, strategyError, movesUntilNextUpdate]);
 
   const validMoves = useMemo(() => {
     if (!selectedSquare) return [];
@@ -72,7 +98,8 @@ export const useChessGame = () => {
     setIsPlayerTurn(true);
     setLastAIMove(null);
     setMoveHistory([]);
-  }, []);
+    clearStrategy(); // Clear tactical strategy for new game
+  }, [clearStrategy]);
 
   const undoMove = useCallback(() => {
     if (moveHistory.length > 0) {
@@ -136,12 +163,16 @@ export const useChessGame = () => {
       const currentFen = gameWithHistory.fen();
       const currentHistory = gameWithHistory.history();
       
+      // Get tactical patterns for AI move
+      const tacticalPatterns = getTacticalPatterns();
+      
       const response = await fetch('/api/ai-move-v3', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           fen: currentFen,
-          gameHistory: currentHistory
+          gameHistory: currentHistory,
+          tacticalPatterns: tacticalPatterns
         }),
       });
 
@@ -186,7 +217,7 @@ export const useChessGame = () => {
         setIsPlayerTurn(true);
       }
     }
-  }, [gameWithHistory, game]);
+  }, [gameWithHistory, game, getTacticalPatterns]);
 
   return {
     game,
@@ -201,6 +232,9 @@ export const useChessGame = () => {
     handleSquareClick,
     makeAIMove,
     setGame,
-    setIsPlayerTurn
+    setIsPlayerTurn,
+    // Tactical strategy controls
+    refreshStrategy,
+    clearStrategy
   };
 };

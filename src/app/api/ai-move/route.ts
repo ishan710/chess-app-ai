@@ -7,9 +7,7 @@ import { join } from 'path';
 export async function POST(request: NextRequest) {
   try {
     const { fen, gameHistory } = await request.json();
-    console.log('📥 Received FEN:', fen);
-    console.log('📥 Received game history:', gameHistory);
-    console.log('📥 FEN length:', fen?.length);
+    
     
     if (!fen) {
       return NextResponse.json({ error: 'FEN string is required' }, { status: 400 });

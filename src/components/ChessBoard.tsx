@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 import styles from './ChessBoard.module.css';
 import { useChessGame } from '@/hooks/useChessGame';
 import { usePieceImage } from '@/hooks/usePieceImage';
@@ -21,13 +21,24 @@ const ChessBoard: React.FC<ChessBoardProps> = () => {
     undoMove,
     handleSquareClick,
     makeAIMove,
-    setIsPlayerTurn
+    setIsPlayerTurn,
+    refreshStrategy,
+    clearStrategy
   } = useChessGame();
 
   const { getPieceImage } = usePieceImage();
+  const historyContentRef = useRef<HTMLDivElement>(null);
+  const [isStrategyExpanded, setIsStrategyExpanded] = useState(false);
 
   // Auto-trigger AI moves
   useAIMove({ isPlayerTurn, makeAIMove, setIsPlayerTurn });
+
+  // Auto-scroll to bottom when new moves are added
+  useEffect(() => {
+    if (historyContentRef.current) {
+      historyContentRef.current.scrollTop = historyContentRef.current.scrollHeight;
+    }
+  }, [moveHistory]);
 
   // Memoized board rendering
   const boardSquares = useMemo(() => {
@@ -137,6 +148,72 @@ const ChessBoard: React.FC<ChessBoardProps> = () => {
   return (
     <div className={styles.chessGame}>
       <div className={styles.performanceBar}>
+        {/* Tactical Strategy Display */}
+        {gameState.currentStrategy && (
+          <div className={styles.tacticalStrategy}>
+            <div 
+              className={styles.strategyHeader}
+              onClick={() => setIsStrategyExpanded(!isStrategyExpanded)}
+            >
+              <div className={styles.strategyTitle}>
+                <span className={styles.strategyIcon}>
+                  {isStrategyExpanded ? '▼' : '▶'}
+                </span>
+                <span>AI Strategy</span>
+                {gameState.movesUntilNextUpdate > 0 && (
+                  <span className={styles.updateCountdown}>
+                    ({gameState.movesUntilNextUpdate} moves)
+                  </span>
+                )}
+              </div>
+              <div className={styles.strategyControls}>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    refreshStrategy();
+                  }}
+                  className={styles.refreshButton}
+                  disabled={gameState.isStrategyLoading}
+                >
+                  {gameState.isStrategyLoading ? 'Updating...' : 'Refresh'}
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearStrategy();
+                  }}
+                  className={styles.clearButton}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            {isStrategyExpanded && (
+              <div className={styles.strategyContent}>
+                <div className={styles.primaryGoal}>
+                  <strong>Goal:</strong> {gameState.currentStrategy.primaryGoal}
+                </div>
+                <div className={styles.tacticalPatterns}>
+                  <strong>Patterns:</strong>
+                  <ul>
+                    {gameState.currentStrategy.tacticalPatterns.map((pattern, index) => (
+                      <li key={index}>{pattern}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className={styles.movePriorities}>
+                  <strong>Priorities:</strong>
+                  <ul>
+                    {gameState.currentStrategy.movePriorities.map((priority, index) => (
+                      <li key={index}>{priority}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className={styles.barContainer}>
           <div 
             className={styles.barFill}
@@ -195,6 +272,28 @@ const ChessBoard: React.FC<ChessBoardProps> = () => {
           <div className={styles.moveReasoning}>{lastAIMove.reasoning}</div>
         </div>
       )}
+
+      {/* Move History */}
+      <div className={styles.moveHistory}>
+        <div className={styles.historyHeader}>Move History</div>
+        <div className={styles.historyContent} ref={historyContentRef}>
+          {moveHistory.length === 0 ? (
+            <div className={styles.emptyHistory}>No moves yet</div>
+          ) : (
+            moveHistory.map((entry, index) => (
+              <div key={index} className={styles.historyEntry}>
+                <div className={styles.moveNumber}>{Math.floor(index / 2) + 1}.</div>
+                <div className={entry.isPlayerMove ? styles.playerMove : styles.aiMove}>
+                  {entry.move}
+                </div>
+                <div className={styles.movePlayer}>
+                  {entry.isPlayerMove ? '(White)' : '(Black)'}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -21,8 +21,9 @@ export const useChessAPI = ({ fen }: UseChessAPIProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const evaluatePosition = useCallback(async () => {
-    if (!fen) return;
+  const evaluatePosition = useCallback(async (currentFen?: string) => {
+    const fenToEvaluate = currentFen || fen;
+    if (!fenToEvaluate) return;
 
     setIsLoading(true);
     setError(null);
@@ -34,9 +35,9 @@ export const useChessAPI = ({ fen }: UseChessAPIProps) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fen: fen,
-          depth: 12, // Good balance of speed and accuracy
-          maxThinkingTime: 50, // 50ms max thinking time
+          fen: fenToEvaluate,
+          depth: 30,
+          maxThinkingTime: 100,
         }),
       });
 
@@ -46,11 +47,21 @@ export const useChessAPI = ({ fen }: UseChessAPIProps) => {
 
       const data = await response.json();
       
+      console.log('Chess API response:', data);
+      
       // Handle different response types
       if (data.type === 'bestmove' || data.type === 'move') {
+        // API returns evaluation from White's perspective:
+        // Positive eval = White winning, Negative eval = Black winning
+        // winChance = White's win percentage
+        const evalScore = data.eval || 0;
+        const winChance = data.winChance || 50;
+        
+        console.log('Eval:', evalScore, 'Win%:', winChance);
+        
         setEvaluation({
-          eval: data.eval || 0,
-          winChance: data.winChance || 50,
+          eval: evalScore,
+          winChance: winChance,
           text: data.text || '',
           depth: data.depth || 0,
           mate: data.mate,
