@@ -7,17 +7,18 @@ import { endgamePrompt } from '@/prompts/endGame';
 import { openingsPrompt } from '@/prompts/openings';
 
 // Determine game phase based on position and moves
-export function determineGamePhase(game: Chess, recentMoves: string[]): string {
-  const moveCount = recentMoves.length;
+export function determineGamePhase(game: Chess, moveCount: number): string {
   const materialCount = countMaterial(game);
   
+  // Opening: First 2 moves (6 moves per player)
   if (moveCount <= 2) {
     return 'opening';
-  } else if (moveCount <= 20) {
-    return 'middlegame';
-  } else if (materialCount < 20) {
+  } 
+  else if (materialCount < 20) {
     return 'endgame';
-  } else {
+  } 
+  // Middlegame: Everything else
+  else {
     return 'middlegame';
   }
 }
@@ -32,7 +33,7 @@ export function countMaterial(game: Chess): number {
       const piece = board[i][j];
       if (piece) {
         const values: { [key: string]: number } = {
-          pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 0
+          p: 1, n: 3, b: 3, r: 5, q: 9, k: 0
         };
         count += values[piece.type] || 0;
       }
@@ -67,17 +68,16 @@ export async function analyzeHistoricalMoves(recentMoves: string[], openai: Open
     return "This is the beginning of the game - no moves have been played yet.";
   }
 
-  try {
-    const historicalPrompt = `You are a chess grandmaster analyzing recent moves.
+  const historicalPrompt = `You are a chess grandmaster analyzing recent moves.
 
 Recent moves: ${recentMoves.join(', ')}
 
 Analyze and provide insights about:
 1. Attacking Opportunities: Identify strong tactical or positional moves that can pressure the opponent.
-2. Key Threats and Weaknesses: Point out vulnerabilities in both sides’ positions (exposed king, weak pawns, hanging pieces, etc.).
-3. Repetitive Moves: If you notice the same move or sequence being repeated (e.g., shuffling the same piece back and forth), call it out. Explain why it’s ineffective and suggest a better plan to avoid repetition."
-Keep it concise and tactical.`;
+2. Key Threats and Weaknesses: Point out vulnerabilities in both sides' positions (exposed king, weak pawns, hanging pieces, etc.).
+3. Repetitive Moves: If you notice the same move or sequence being repeated (e.g., shuffling the same piece back and forth), call it out and stop it.`;
 
+  try {
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: historicalPrompt }],
@@ -87,7 +87,6 @@ Keep it concise and tactical.`;
 
     const analysis = completion.choices[0]?.message?.content || "Unable to analyze historical moves.";
     return analysis;
-
   } catch (error) {
     return `Recent moves: ${recentMoves.join(', ')}. Unable to provide detailed analysis due to technical issues.`;
   }
@@ -119,7 +118,7 @@ export function createDynamicPrompt({
 }): string {
   
   let prompt = `You are a chess expert playing as black. Here's the current board position:
-
+  
 ${boardVisual}
 
 Current FEN: ${fen}

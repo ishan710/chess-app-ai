@@ -12,10 +12,7 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const { fen, gameHistory, tacticalPatterns } = await request.json();
-
-    // console.log('🤖 V3 API - Received tactical patterns:', tacticalPatterns);
-    // console.log('🤖 V3 API - Received tactical patterns:', tacticalPatterns);
+    const { fen, gameHistory, tacticalPatterns, moveCount } = await request.json();
     if (!fen) {
       return NextResponse.json({ error: 'FEN string is required' }, { status: 400 });
     }
@@ -40,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const recentMoves = gameHistory ? gameHistory.slice(-6) : [];
+    const recentMoves = game.history().slice(-6); // Use actual game history instead of passed gameHistory
     const moves = game.moves({ verbose: true });
     
     if (moves.length === 0) {
@@ -52,7 +49,7 @@ export async function POST(request: NextRequest) {
     
     formattedMoves.map(m => `${m.notation} (${m.score}pts)`).join(', ');
 
-    const gamePhase = determineGamePhase(game, recentMoves);
+    const gamePhase = determineGamePhase(game, moveCount);
     console.log('🤖 V3 API - Game phase:', gamePhase);
     const positionAnalysis = analyzePosition(game);
     const historicalAnalysis = await analyzeHistoricalMoves(recentMoves, openai);
@@ -72,6 +69,7 @@ export async function POST(request: NextRequest) {
     let reasoning = 'No reasoning provided';
     let attempts = 0;
     const maxAttempts = 5;
+    console.log('🤖 V3 API - Prompt:', prompt);
 
     while (!move && attempts < maxAttempts) {
       attempts++;

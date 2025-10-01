@@ -13,7 +13,7 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const { fen, gameHistory, currentStrategy } = await request.json();
+    const { fen, gameHistory, currentStrategy, moveCount } = await request.json();
 
     if (!fen) {
       return NextResponse.json({ error: 'FEN string is required' }, { status: 400 });
@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const recentMoves = gameHistory ? gameHistory.slice(-10) : [];
-    const gamePhase = determineGamePhase(game, recentMoves);
+    const recentMoves = game.history().slice(-10); // Use actual game history instead of passed gameHistory
+    const gamePhase = determineGamePhase(game, moveCount);
     const positionAnalysis = analyzePosition(game);
     const historicalAnalysis = await analyzeHistoricalMoves(recentMoves, openai);
 

@@ -18,29 +18,24 @@ export const useChessGame = () => {
     move: string;
     timestamp: number;
     isPlayerMove: boolean;
+    isPlayerTurn: boolean;
   }>>([]);
+  const [moveCount, setMoveCount] = useState(0);
 
   const { evaluation, isLoading: isEvaluating, error: evaluationError, evaluatePosition } = useChessAPI({ fen: game.fen() });
   
   const fen = game.fen();
-  const moveCount = moveHistory.length;
 
-  const reconstructGameFromHistory = useCallback((moves: string[]) => {
-    const newGame = new Chess();
-    moves.forEach(move => {
-      try {
-        newGame.move(move);
-      } catch (error) {
-        console.error('Error replaying move:', move, error);
-      }
-    });
-    return newGame;
-  }, []);
+  // Console log the board state for debugging
+  console.log('Current board state:', game.board());
+  console.log('Current FEN:', game.fen());
+  console.log('Current turn:', game.turn());
+  console.log('Is player turn:', isPlayerTurn);
 
   const gameWithHistory = useMemo(() => {
-    const moves = moveHistory.map(move => move.move);
-    return reconstructGameFromHistory(moves);
-  }, [moveHistory, reconstructGameFromHistory]);
+    // Use the current game state directly since we're storing complete FEN states
+    return game;
+  }, [game]);
   
   // Initialize tactical strategy
   const {
@@ -98,21 +93,33 @@ export const useChessGame = () => {
     setIsPlayerTurn(true);
     setLastAIMove(null);
     setMoveHistory([]);
+    setMoveCount(0);
     clearStrategy(); // Clear tactical strategy for new game
   }, [clearStrategy]);
 
   const undoMove = useCallback(() => {
     if (moveHistory.length > 0) {
       const lastMove = moveHistory[moveHistory.length - 1];
-      setMoveHistory(prev => prev.slice(0, -1));
+      const newMoveHistory = moveHistory.slice(0, -1);
+      
+      // If there are moves left, restore to the previous state
+      if (newMoveHistory.length > 0) {
+        const previousMove = newMoveHistory[newMoveHistory.length - 1];
+        setGame(new Chess(previousMove.fen));
+        setIsPlayerTurn(previousMove.isPlayerTurn);
+      } else {
+        // If no moves left, reset to initial state
+        setGame(new Chess());
+        setIsPlayerTurn(true);
+      }
+      
+      setMoveHistory(newMoveHistory);
+      setMoveCount(newMoveHistory.length);
+      setSelectedSquare(null);
       
       if (!lastMove.isPlayerMove) {
         setLastAIMove(null);
       }
-      
-      setGame(new Chess(lastMove.fen));
-      setSelectedSquare(null);
-      setIsPlayerTurn(!lastMove.isPlayerMove);
     }
   }, [moveHistory]);
 
@@ -131,13 +138,18 @@ export const useChessGame = () => {
         });
         
         if (move) {
+          // Create a new game instance with the updated state
+          const newGame = new Chess(game.fen());
           setMoveHistory(prev => [...prev, {
-            fen: game.fen(),
+            fen: newGame.fen(),
             move: move.san,
             timestamp: Date.now(),
-            isPlayerMove: true
+            isPlayerMove: true,
+            isPlayerTurn: false // After player move, it's AI's turn
           }]);
           
+          setGame(newGame);
+          setMoveCount(prev => prev + 1);
           setSelectedSquare(null);
           setIsPlayerTurn(false);
           return true;
@@ -172,7 +184,8 @@ export const useChessGame = () => {
         body: JSON.stringify({ 
           fen: currentFen,
           gameHistory: currentHistory,
-          tacticalPatterns: tacticalPatterns
+          tacticalPatterns: tacticalPatterns,
+          moveCount: moveCount
         }),
       });
 
@@ -192,10 +205,12 @@ export const useChessGame = () => {
         fen: data.fen,
         move: data.move,
         timestamp: Date.now(),
-        isPlayerMove: false
+        isPlayerMove: false,
+        isPlayerTurn: true // After AI move, it's player's turn
       }]);
       
       setGame(new Chess(data.fen));
+      setMoveCount(prev => prev + 1);
       setIsPlayerTurn(true);
       
       if (data.reasoning) {
@@ -227,6 +242,7 @@ export const useChessGame = () => {
     isPlayerTurn,
     lastAIMove,
     moveHistory,
+    moveCount,
     resetGame,
     undoMove,
     handleSquareClick,

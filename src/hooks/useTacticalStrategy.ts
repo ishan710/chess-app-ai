@@ -87,7 +87,8 @@ export const useTacticalStrategy = ({ fen, gameHistory, moveCount }: UseTactical
         body: JSON.stringify({ 
           fen: fenToUse,
           gameHistory: historyToUse,
-          currentStrategy: currentStrategy
+          currentStrategy: currentStrategy,
+          moveCount: moveCount
         }),
       });
 
