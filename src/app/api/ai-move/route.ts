@@ -31,12 +31,6 @@ export async function POST(request: NextRequest) {
 
     // Check if black has opened yet (determine if we're in opening phase)
     const hasBlackOpened = hasBlackMadeOpeningMove(game);
-    console.log('🎯 Opening phase check - Black has opened:', hasBlackOpened);
-    console.log('📊 Game history length:', game.history().length);
-    console.log('📋 Black moves count:', game.history({ verbose: true }).filter((_, index) => index % 2 === 1).length);
-    console.log('🎮 Current turn:', game.turn());
-    console.log('📜 Full history:', game.history());
-
     // Get all possible moves
     const moves = game.moves({ verbose: true });
     
