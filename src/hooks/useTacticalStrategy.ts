@@ -24,7 +24,6 @@ interface UseTacticalStrategyProps {
   moveCount: number;
 }
 
-const STRATEGY_STORAGE_KEY = 'chess-tactical-strategy';
 const STRATEGY_UPDATE_INTERVAL = 3; // Update every 3 moves
 
 export const useTacticalStrategy = ({ fen, gameHistory, moveCount }: UseTacticalStrategyProps) => {
@@ -36,31 +35,7 @@ export const useTacticalStrategy = ({ fen, gameHistory, moveCount }: UseTactical
   
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load strategy from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STRATEGY_STORAGE_KEY);
-      if (stored) {
-        const parsed: StrategyData = JSON.parse(stored);
-        setStrategyData(parsed);
-        setCurrentStrategy(parsed.strategy);
-        setLastUpdateMove(Math.floor(moveCount / STRATEGY_UPDATE_INTERVAL) * STRATEGY_UPDATE_INTERVAL);
-        console.log('🎯 Loaded strategy from localStorage:', parsed.strategy.primaryGoal);
-      }
-    } catch (error) {
-      console.error('Failed to load strategy from localStorage:', error);
-    }
-  }, []);
 
-  // Save strategy to localStorage
-  const saveStrategyToStorage = useCallback((data: StrategyData) => {
-    try {
-      localStorage.setItem(STRATEGY_STORAGE_KEY, JSON.stringify(data));
-
-    } catch (error) {
-      console.error('Failed to save strategy to localStorage:', error);
-    }
-  }, []);
 
   // Check if strategy needs updating
   const shouldUpdateStrategy = useCallback(() => {
@@ -106,7 +81,6 @@ export const useTacticalStrategy = ({ fen, gameHistory, moveCount }: UseTactical
       setStrategyData(data);
       setCurrentStrategy(data.strategy);
       setLastUpdateMove(moveCount);
-      saveStrategyToStorage(data);
       
       console.log('🎯 New strategy generated:', data.strategy.primaryGoal);
       
@@ -116,7 +90,7 @@ export const useTacticalStrategy = ({ fen, gameHistory, moveCount }: UseTactical
     } finally {
       setIsLoading(false);
     }
-  }, [fen, gameHistory, currentStrategy, moveCount, saveStrategyToStorage]);
+  }, [fen, gameHistory, currentStrategy, moveCount]);
 
   // Auto-update strategy when conditions are met
   useEffect(() => {
@@ -150,7 +124,6 @@ export const useTacticalStrategy = ({ fen, gameHistory, moveCount }: UseTactical
     setStrategyData(null);
     setLastUpdateMove(0);
     setError(null);
-    localStorage.removeItem(STRATEGY_STORAGE_KEY);
     console.log('🎯 Strategy cleared');
   }, []);
 

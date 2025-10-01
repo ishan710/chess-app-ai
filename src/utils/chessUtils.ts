@@ -10,14 +10,12 @@ import { openingsPrompt } from '@/prompts/openings';
 export function determineGamePhase(game: Chess, moveCount: number): string {
   const materialCount = countMaterial(game);
   
-  // Opening: First 2 moves (6 moves per player)
   if (moveCount <= 2) {
     return 'opening';
   } 
   else if (materialCount < 20) {
     return 'endgame';
   } 
-  // Middlegame: Everything else
   else {
     return 'middlegame';
   }
