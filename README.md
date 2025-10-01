@@ -2,6 +2,8 @@
 
 A sophisticated chess application featuring advanced AI-powered move generation with dynamic tactical strategy and prompt engineering.
 
+[Link to App](https://chess-app-ai.vercel.app/)
+
 ## Core Features
 
 - **V3 AI Move Generation**: Advanced chess AI with retry logic and move validation
