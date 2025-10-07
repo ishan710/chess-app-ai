@@ -23,7 +23,9 @@ const ChessBoard: React.FC<ChessBoardProps> = () => {
     makeAIMove,
     setIsPlayerTurn,
     refreshStrategy,
-    clearStrategy
+    clearStrategy,
+    whiteTime,
+    blackTime,
   } = useChessGame();
 
   const { getPieceImage } = usePieceImage();
@@ -39,6 +41,11 @@ const ChessBoard: React.FC<ChessBoardProps> = () => {
       historyContentRef.current.scrollTop = historyContentRef.current.scrollHeight;
     }
   }, [moveHistory]);
+
+  useEffect(() => {
+  if (whiteTime <= 0 || blackTime <= 0){
+    resetGame()
+  }},[whiteTime, blackTime])
 
   // Memoized board rendering
   const boardSquares = useMemo(() => {
@@ -232,6 +239,14 @@ const ChessBoard: React.FC<ChessBoardProps> = () => {
             WHITE: {positionEvaluation.winChance.toFixed(1)}%
           </div>
         </div>
+        <div>
+          <div className={styles.blackWin}>
+            BLACK: Time {blackTime}
+          </div>
+          <div className={styles.whiteWin}>
+            WHITE: Time {whiteTime}
+          </div>
+        </div>
         <div className={styles.turnText}>
           {isPlayerTurn ? 'Your Turn' : 'AI Thinking...'}
         </div>
@@ -241,8 +256,8 @@ const ChessBoard: React.FC<ChessBoardProps> = () => {
           </div>
         )}
       </div>
-
       <div className={styles.gameArea}>
+
         <div className={styles.chessBoard}>
           {boardSquares}
         </div>

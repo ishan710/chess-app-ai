@@ -8,6 +8,11 @@ export const useChessGame = () => {
   const [game, setGame] = useState(() => new Chess());
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+  const [intervalId, setIntervalId] = useState(null);
+  
+  const [blackTime, setBlackTime] = useState(20)
+  const [whiteTime, setWhiteTime] = useState(20)
+  
   const [lastAIMove, setLastAIMove] = useState<{
     move: string;
     reasoning: string;
@@ -61,6 +66,26 @@ export const useChessGame = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fen]);
 
+
+  useEffect(() => {
+    if (isPlayerTurn && moveCount > 0){
+      const interval = setInterval(() => {
+        setWhiteTime(prevCount => prevCount - 1);
+        setIntervalId(interval)
+      }, 1000);
+      setBlackTime(prevCount => prevCount - 3);
+    }
+    if (!isPlayerTurn){
+      const interval = setInterval(() => {
+        setBlackTime(prevCount => prevCount - 1);
+        setIntervalId(interval)
+      }, 1000);
+    }
+    clearInterval(intervalId);
+    setIntervalId(null)
+  }, [isPlayerTurn, moveCount]);
+
+
   const gameState = useMemo(() => ({
     isGameOver: gameWithHistory.isGameOver(),
     isCheckmate: gameWithHistory.isCheckmate(),
@@ -94,6 +119,8 @@ export const useChessGame = () => {
     setLastAIMove(null);
     setMoveHistory([]);
     setMoveCount(0);
+    setBlackTime(10);
+    setWhiteTime(10);
     clearStrategy(); // Clear tactical strategy for new game
   }, [clearStrategy]);
 
@@ -249,6 +276,8 @@ export const useChessGame = () => {
     makeAIMove,
     setGame,
     setIsPlayerTurn,
+    whiteTime,
+    blackTime,
     // Tactical strategy controls
     refreshStrategy,
     clearStrategy

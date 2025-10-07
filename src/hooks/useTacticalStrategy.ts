@@ -36,7 +36,6 @@ export const useTacticalStrategy = ({ fen, gameHistory, moveCount }: UseTactical
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 
-
   // Check if strategy needs updating
   const shouldUpdateStrategy = useCallback(() => {
     const movesSinceLastUpdate = moveCount - lastUpdateMove;
